@@ -12,7 +12,8 @@ const Konva = require('konva/lib/Core');
 const ReactFiberReconciler = require('react-reconciler');
 const ReactDOMComponentTree = require('./ReactDOMComponentTree');
 const HostConfig = require('./ReactKonvaHostConfig');
-const { applyNodeProps, toggleStrictMode } = require('./makeUpdates');
+const { toggleStrictMode } = require('./makeUpdates');
+const invariant = require('./invariant');
 
 // export for testing
 // const REACT_VERSION = '16.8.3';
@@ -72,15 +73,52 @@ KonvaRenderer.injectIntoDevTools({
   }
 });
 
-/** API */
+function isValidKonvaContainer(container) {
+  return container instanceof Konva.Stage || container instanceof Konva.Container;
+}
 
-const StageWrap = React.forwardRef((props, ref) => {
-  return <Stage {...props} forwardedRef={ref} />;
-});
+const REACT_KONVA_CONTAINER_KEY = Symbol('REACT_KONVA_CONTAINER_KEY');
+function render(element, container, callback) {
+  invariant(
+    isValidKonvaContainer(container),
+    'Target container is not a Konva container.',
+  );
+  if (!container[REACT_KONVA_CONTAINER_KEY]) {
+    container[REACT_KONVA_CONTAINER_KEY] = KonvaRenderer.createContainer(container, false, false);
+  }
+  return KonvaRenderer.updateContainer(element, container[REACT_KONVA_CONTAINER_KEY], null, callback);
+}
+
+function unmountComponent(container) {
+  if (!container[REACT_KONVA_CONTAINER_KEY]) return false;
+  KonvaRenderer.unbatchedUpdates(() => {
+    KonvaRenderer.updateContainer(null, container[REACT_KONVA_CONTAINER_KEY], null, );
+  });
+  return true;
+}
+
+// TODO: https://github.com/react-spring/react-three-fiber/blob/8fa501a81bf59629283fbd09d872d805638fb52d/src/reconciler.tsx#L425
+const hasSymbol = typeof Symbol === 'function' && Symbol.for
+const REACT_PORTAL_TYPE = hasSymbol ? Symbol.for('react.portal') : 0xeaca
+function createPortal(children, containerInfo, implementation, key) {
+  invariant(
+    isValidKonvaContainer(containerInfo),
+    'Target container is not a Konva container.',
+  );
+  return {
+    $$typeof: REACT_PORTAL_TYPE,
+    key: key == null ? null : '' + key,
+    children,
+    containerInfo,
+    implementation,
+  };
+}
 
 module.exports = {
   ...TYPES,
   __matchRectVersion,
-  Stage: StageWrap,
-  useStrictMode: toggleStrictMode
+  useStrictMode: toggleStrictMode,
+  render,
+  unmountComponent,
+  createPortal,
 };
