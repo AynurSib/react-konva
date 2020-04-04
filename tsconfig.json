@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
-    "strict": true
+    "strict": true,
+    "lib": [ "ES2015", "DOM" ]
   },
   "files": [
     "react-konva.d.ts"
