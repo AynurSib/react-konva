@@ -8,9 +8,11 @@
 'use strict';
 
 const ReactKonvaCore = require('./ReactKonvaCore');
+const ReactKonvaView = require('./ReactKonvaView');
 // import full konva to enable all nodes
 const Konva = require('konva');
 
 module.exports = {
-  ...ReactKonvaCore
+  ...ReactKonvaCore,
+  ...ReactKonvaView
 };
