@@ -74,7 +74,7 @@ KonvaRenderer.injectIntoDevTools({
 });
 
 function isValidKonvaContainer(container) {
-  return container instanceof Konva.Stage || container instanceof Konva.Container;
+  return container instanceof Konva.Container;
 }
 
 const REACT_KONVA_CONTAINER_KEY = Symbol('REACT_KONVA_CONTAINER_KEY');

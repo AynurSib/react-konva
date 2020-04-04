@@ -1,6 +1,10 @@
 import * as React from 'react';
 import Konva from 'konva';
 
+export function render(element: React.ReactNode, container: Konva.Container, callback?: () => void): void;
+export function unmountComponent(container: Konva.Container): boolean;
+export function createPortal(children: ReactNode, container: Konva.Container, key?: null | string): React.ReactPortal;
+
 export interface KonvaNodeEvents {
   onMouseOver?(evt: Konva.KonvaEventObject<MouseEvent>): void;
   onMouseMove?(evt: Konva.KonvaEventObject<MouseEvent>): void;
@@ -41,6 +45,7 @@ export interface KonvaNodeComponent<
 
 export interface StageProps
   extends Konva.NodeConfig,
+    React.RefAttributes<Konva.Stage>,
     KonvaNodeEvents,
     Pick<
       React.HTMLProps<any>,
@@ -70,9 +75,7 @@ export interface StageProps
 // function, but if the user tries to call it a runtime exception will occur.
 
 /** Stage */
-export class Stage extends React.Component<StageProps & KonvaNodeEvents> {
-  getStage(): Konva.Stage;
-}
+export var Stage: React.FunctionComponent<StageProps>;
 
 /** Containers */
 export var Layer: KonvaNodeComponent<Konva.Layer, Konva.LayerConfig>;
