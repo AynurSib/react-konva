@@ -74,7 +74,7 @@ export interface StageProps
 // function, but if the user tries to call it a runtime exception will occur.
 
 /** Views */
-export function NodeView<Props = Konva.NodeConfig>(props: Props & KonvaNodeEvents): React.ReactElement<any, any> | null;
+export function NodeView<Props = Konva.NodeConfig>(props: Props & KonvaNodeEvents & { node: Konva.Node | undefined | null }): React.ReactElement<any, any> | null;
 export function StageView(props: StageProps): React.ReactElement<any, any> | null;
 export var Stage: React.FunctionComponent<StageProps>;
 
