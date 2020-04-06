@@ -1,9 +1,8 @@
 import * as React from 'react';
 import Konva from 'konva';
 
-export function render(element: React.ReactNode, container: Konva.Container, callback?: () => void): void;
-export function unmountComponent(container: Konva.Container): boolean;
-export function createPortal(children: ReactNode, container: Konva.Container, key?: null | string): React.ReactPortal;
+export function render(element: React.ReactNode, container: Konva.Stage | Konva.Container, callback?: () => void): void;
+export function unmountComponent(container: Konva.Stage | Konva.Container): boolean;
 
 export interface KonvaNodeEvents {
   onMouseOver?(evt: Konva.KonvaEventObject<MouseEvent>): void;
@@ -74,7 +73,9 @@ export interface StageProps
 // The down side to this approach, is that typescript thinks the type is a
 // function, but if the user tries to call it a runtime exception will occur.
 
-/** Stage */
+/** Views */
+export function NodeView<Props = Konva.NodeConfig>(props: Props & KonvaNodeEvents): React.ReactElement<any, any> | null;
+export function StageView(props: StageProps): React.ReactElement<any, any> | null;
 export var Stage: React.FunctionComponent<StageProps>;
 
 /** Containers */

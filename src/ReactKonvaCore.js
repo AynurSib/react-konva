@@ -12,7 +12,7 @@ const Konva = require('konva/lib/Core');
 const ReactFiberReconciler = require('react-reconciler');
 const ReactDOMComponentTree = require('./ReactDOMComponentTree');
 const HostConfig = require('./ReactKonvaHostConfig');
-const { toggleStrictMode } = require('./makeUpdates');
+const { toggleStrictMode, applyNodeProps } = require('./makeUpdates');
 const invariant = require('./invariant');
 
 // export for testing
@@ -78,7 +78,7 @@ function isValidKonvaContainer(container) {
 }
 
 const REACT_KONVA_CONTAINER_KEY = Symbol('REACT_KONVA_CONTAINER_KEY');
-function render(element, container, callback) {
+function render(element, container, props, prevProps, callback) {
   invariant(
     isValidKonvaContainer(container),
     'Target container is not a Konva container.',
@@ -86,7 +86,9 @@ function render(element, container, callback) {
   if (!container[REACT_KONVA_CONTAINER_KEY]) {
     container[REACT_KONVA_CONTAINER_KEY] = KonvaRenderer.createContainer(container, false, false);
   }
-  return KonvaRenderer.updateContainer(element, container[REACT_KONVA_CONTAINER_KEY], null, callback);
+  const result = KonvaRenderer.updateContainer(element, container[REACT_KONVA_CONTAINER_KEY], null, callback);
+  applyNodeProps(container, props, prevProps);
+  return;
 }
 
 function unmountComponent(container) {
@@ -97,22 +99,58 @@ function unmountComponent(container) {
   return true;
 }
 
-// TODO: https://github.com/react-spring/react-three-fiber/blob/8fa501a81bf59629283fbd09d872d805638fb52d/src/reconciler.tsx#L425
-const hasSymbol = typeof Symbol === 'function' && Symbol.for
-const REACT_PORTAL_TYPE = hasSymbol ? Symbol.for('react.portal') : 0xeaca
-function createPortal(children, containerInfo, implementation, key) {
-  invariant(
-    isValidKonvaContainer(containerInfo),
-    'Target container is not a Konva container.',
-  );
-  return {
-    $$typeof: REACT_PORTAL_TYPE,
-    key: key == null ? null : '' + key,
-    children,
-    containerInfo,
-    implementation,
-  };
+function NodeView({ node, children, ...props }) {
+  const prevProps = React.useRef();
+  React.useLayoutEffect(() => {
+    if (!node) return;
+    return () => unmountComponent(node);
+  }, [ node ]);
+  if (node) {
+    render(children, node, props, prevProps.current);
+    prevProps.current = props;
+  }
+  return null;
 }
+
+const StageView = React.forwardRef(function StageView(props, ref) {
+  const container = React.useRef(null);
+  const [ stage, setStage ] = React.useState();
+
+  React.useImperativeHandle(ref, () => stage, [ stage ]);
+
+  const prevProps = React.useRef();
+  React.useLayoutEffect(() => {
+    if (!Konva.isBrowser || !container.current) return;
+    const stage = new Konva.Stage({
+      width: props.width,
+      height: props.height,
+      container: container.current,
+    });
+    render(props.children, stage, props, prevProps.current);
+    prevProps.current = props;
+    setStage(stage);
+    return () => {
+      unmountComponent(stage);
+      stage.destroy();
+    };
+  }, [ ]);
+  if (stage) {
+    render(props.children, stage, props, prevProps.current);
+    prevProps.current = props;
+  }
+
+  return (
+    <div
+      ref={container}
+      accessKey={props.accessKey}
+      className={props.className}
+      role={props.role}
+      style={props.style}
+      tabIndex={props.tabIndex}
+      title={props.title}
+    />
+  );
+});
 
 module.exports = {
   ...TYPES,
@@ -120,5 +158,6 @@ module.exports = {
   useStrictMode: toggleStrictMode,
   render,
   unmountComponent,
-  createPortal,
+  NodeView,
+  StageView, Stage: StageView,
 };
