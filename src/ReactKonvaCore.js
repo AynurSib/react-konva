@@ -105,10 +105,12 @@ function NodeView({ node, children, ...props }) {
     if (!node) return;
     return () => unmountComponent(node);
   }, [ node ]);
-  if (node) {
-    render(children, node, props, prevProps.current);
-    prevProps.current = props;
-  }
+  React.useLayoutEffect(() => {
+    if (node) {
+      render(children, node, props, prevProps.current);
+      prevProps.current = props;
+    }
+  });
   return null;
 }
 
@@ -134,10 +136,12 @@ const StageView = React.forwardRef(function StageView(props, ref) {
       stage.destroy();
     };
   }, [ ]);
-  if (stage) {
-    render(props.children, stage, props, prevProps.current);
-    prevProps.current = props;
-  }
+  React.useLayoutEffect(() => {
+    if (stage) {
+      render(props.children, stage, props, prevProps.current);
+      prevProps.current = props;
+    }
+  });
 
   return (
     <div
